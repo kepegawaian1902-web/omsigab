@@ -78,14 +78,18 @@
         <!-- HEADER -->
         <header class="bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-700 p-10 rounded-t-[2.5rem] shadow-2xl flex flex-col md:flex-row items-center justify-between text-white border-b border-white/10">
             <div class="flex items-center space-x-6 text-center md:text-left">
-                <div class="bg-white/10 p-4 rounded-3xl backdrop-blur-2xl border border-white/20 shadow-inner">
-                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-10 h-10">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6h1.5m-1.5 3h1.5m-1.5 3h1.5M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
-                   </svg>
+                <!-- ICON DARI GOOGLE DRIVE (TRANSPARAN) -->
+                <div class="w-20 h-20 flex items-center justify-center">
+                   <img src="https://lh3.googleusercontent.com/u/0/d/1wdO4pFct6MG6itzbKvwAAcMXBXz8523N" 
+                        alt="Logo" 
+                        class="w-full h-full object-contain"
+                        onerror="this.src='https://ui-avatars.com/api/?name=OM+SIGAB&background=transparent&color=fff&size=128'">
                 </div>
                 <div>
                     <h1 class="text-3xl font-extrabold tracking-tight">OM SIGAB</h1>
                     <p class="text-base font-medium text-teal-100/80">Online Monitoring Disiplin Pegawai Bulanan</p>
+                    <!-- PENAMBAHAN TEKS INSTANSI -->
+                    <p class="text-sm font-bold text-white tracking-wider mt-1 opacity-90 uppercase">BPS Kabupaten Belitung</p>
                 </div>
             </div>
             <div class="flex items-center gap-3 mt-6 md:mt-0">
@@ -219,7 +223,7 @@
             <div class="text-center mb-8">
                 <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25-2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
                 </div>
                 <h3 class="text-2xl font-black text-gray-800">Login Administrator</h3>
@@ -321,7 +325,9 @@
         }
 
         function getKJKValue(obj) { return Number(obj.kekurangan_jam_kerja_kjk) || Number(obj.kjk) || Number(obj.kekurangan_jam_kerja) || 0; }
-        
+        function getTLValue(obj) { return Number(obj.kjk_ht) || 0; }
+        function getPSWValue(obj) { return Number(obj.kjk_pc) || 0; }
+
         function formatMinutesToHours(totalMinutes) {
             if (isNaN(totalMinutes) || totalMinutes === 0) return "0j 0m";
             const h = Math.floor(totalMinutes / 60);
@@ -350,13 +356,11 @@
                     if (!map.has(d.nama)) map.set(d.nama, { nama: d.nama, tl:0, psw:0, kjk:0, hadir:0, tl_freq: 0, psw_freq: 0, apel_freq: 0 });
                     const curr = map.get(d.nama);
                     curr.hadir += (Number(d.hari_hadir) || 0);
-                    curr.tl += (Number(d.tl1)||0) + (Number(d.tl2)||0) + (Number(d.tl3)||0) + (Number(d.tl4)||0);
-                    curr.psw += (Number(d.psw1)||0) + (Number(d.psw2)||0) + (Number(d.psw3)||0) + (Number(d.psw4)||0);
+                    curr.tl += getTLValue(d);
+                    curr.psw += getPSWValue(d);
                     curr.kjk += getKJKValue(d);
-                    
                     if (Number(d.tl1) > 0) curr.tl_freq++; if (Number(d.tl2) > 0) curr.tl_freq++; if (Number(d.tl3) > 0) curr.tl_freq++; if (Number(d.tl4) > 0) curr.tl_freq++;
                     if (Number(d.psw1) > 0) curr.psw_freq++; if (Number(d.psw2) > 0) curr.psw_freq++; if (Number(d.psw3) > 0) curr.psw_freq++; if (Number(d.psw4) > 0) curr.psw_freq++;
-                    
                     curr.apel_freq += (Number(d.keterlambatan_apel_pagi) || 0);
                 });
                 filteredData = Array.from(map.values());
@@ -365,12 +369,15 @@
                     let tl_f = 0, psw_f = 0;
                     if (Number(d.tl1) > 0) tl_f++; if (Number(d.tl2) > 0) tl_f++; if (Number(d.tl3) > 0) tl_f++; if (Number(d.tl4) > 0) tl_f++;
                     if (Number(d.psw1) > 0) psw_f++; if (Number(d.psw2) > 0) psw_f++; if (Number(d.psw3) > 0) psw_f++; if (Number(d.psw4) > 0) psw_f++;
-                    
                     return { 
-                        nama: d.nama, hadir: d.hari_hadir || 0, kjk: getKJKValue(d), tl_freq: tl_f, psw_freq: psw_f, 
+                        nama: d.nama, 
+                        hadir: d.hari_hadir || 0, 
+                        kjk: getKJKValue(d), 
+                        tl_freq: tl_f, 
+                        psw_freq: psw_f, 
                         apel_freq: Number(d.keterlambatan_apel_pagi) || 0,
-                        tl: (Number(d.tl1)||0) + (Number(d.tl2)||0) + (Number(d.tl3)||0) + (Number(d.tl4)||0),
-                        psw: (Number(d.psw1)||0) + (Number(d.psw2)||0) + (Number(d.psw3)||0) + (Number(d.psw4)||0) 
+                        tl: getTLValue(d),
+                        psw: getPSWValue(d)
                     };
                 });
             }
@@ -467,10 +474,9 @@
             const legendContainer = document.getElementById('chart-legend-values');
             if (chartInstance) chartInstance.destroy();
             const year = document.getElementById('year-selector').value;
-            
             const personnelCounts = MONTHS_LIST.map(m => {
                 const monthData = allData.filter(d => d.tahun == year && d.bulan == m);
-                return monthData.filter(d => ((Number(d.tl1)||0) + (Number(d.tl2)||0) + (Number(d.tl3)||0) + (Number(d.tl4)||0)) > 0).length;
+                return monthData.filter(d => getTLValue(d) > 0).length;
             });
 
             legendContainer.innerHTML = MONTHS_LIST.map((m, i) => {
@@ -515,13 +521,10 @@
             });
         }
 
-        // LOGIKA ADMIN & AUTH
         function toggleAdminAction() {
             if (isAdmin) {
-                // Jika sudah admin, buka spreadsheet
                 window.open(SPREADSHEET_URL, '_blank');
             } else {
-                // Jika belum, tampilkan login
                 showLoginModal();
             }
         }
@@ -541,27 +544,18 @@
             const u = document.getElementById('login-username').value;
             const p = document.getElementById('login-password').value;
             const errorBox = document.getElementById('login-error');
-
             if (u === "umum1902" && p === "rahasia1902") {
                 isAdmin = true;
                 errorBox.classList.add('hidden');
-                
-                // Update UI Header
                 const authStatus = document.getElementById('auth-status');
                 authStatus.textContent = "Administrator";
                 authStatus.classList.remove('bg-white/10');
                 authStatus.classList.add('bg-emerald-500/30', 'border-emerald-400');
-                
-                // Show Logout Button
                 document.getElementById('logout-btn').classList.remove('hidden');
-                
-                // Change Login Button Text
                 const loginBtn = document.getElementById('login-nav-btn');
                 loginBtn.textContent = "Update Data";
                 loginBtn.classList.remove('from-blue-600', 'to-indigo-700');
                 loginBtn.classList.add('from-emerald-600', 'to-teal-700');
-                
-                // Redirect
                 window.open(SPREADSHEET_URL, '_blank');
                 hideLoginModal();
             } else {
@@ -571,17 +565,11 @@
 
         function handleLogout() {
             isAdmin = false;
-            
-            // Reset Header
             const authStatus = document.getElementById('auth-status');
             authStatus.textContent = "Mode Publik";
             authStatus.classList.remove('bg-emerald-500/30', 'border-emerald-400');
             authStatus.classList.add('bg-white/10');
-            
-            // Hide Logout Button
             document.getElementById('logout-btn').classList.add('hidden');
-            
-            // Reset Login Button
             const loginBtn = document.getElementById('login-nav-btn');
             loginBtn.textContent = "Login Admin";
             loginBtn.classList.remove('from-emerald-600', 'to-teal-700');
@@ -595,7 +583,6 @@
             if(type==='tl') data = filteredData.filter(d=>d.tl_freq>0).sort((a,b)=>b.tl_freq-a.tl_freq);
             else if(type==='psw') data = filteredData.filter(d=>d.psw_freq>0).sort((a,b)=>b.psw_freq-a.psw_freq);
             else if(type==='apel') data = filteredData.filter(d=>d.apel_freq>0).sort((a,b)=>b.apel_freq-a.apel_freq);
-            
             tbody.innerHTML = data.map((d, i) => `
                 <tr class="hover:bg-gray-50 transition-colors">
                     <td class="p-5 text-gray-400 font-bold">${i+1}</td>
