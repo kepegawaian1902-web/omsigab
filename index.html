@@ -78,7 +78,6 @@
         <!-- HEADER -->
         <header class="bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-700 p-10 rounded-t-[2.5rem] shadow-2xl flex flex-col md:flex-row items-center justify-between text-white border-b border-white/10">
             <div class="flex items-center space-x-6 text-center md:text-left">
-                <!-- ICON DARI GOOGLE DRIVE (TRANSPARAN) -->
                 <div class="w-20 h-20 flex items-center justify-center">
                    <img src="https://lh3.googleusercontent.com/u/0/d/1wdO4pFct6MG6itzbKvwAAcMXBXz8523N" 
                         alt="Logo" 
@@ -88,7 +87,6 @@
                 <div>
                     <h1 class="text-3xl font-extrabold tracking-tight">OM SIGAB</h1>
                     <p class="text-base font-medium text-teal-100/80">Online Monitoring Disiplin Pegawai Bulanan</p>
-                    <!-- PENAMBAHAN TEKS INSTANSI -->
                     <p class="text-sm font-bold text-white tracking-wider mt-1 opacity-90 uppercase">BPS Kabupaten Belitung</p>
                 </div>
             </div>
@@ -155,7 +153,9 @@
                 <!-- Grafik Tren -->
                 <div class="lg:col-span-7 bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 flex flex-col">
                     <div class="flex items-center justify-between mb-8">
-                        <h3 class="font-black text-gray-800 uppercase text-xs tracking-[0.2em]">Tren Pegawai Terlambat (Bulanan)</h3>
+                        <div class="flex flex-col">
+                            <h3 class="font-black text-gray-800 uppercase text-xs tracking-[0.2em]">Tren Pegawai Terlambat (Bulanan)</h3>
+                        </div>
                         <div class="px-4 py-2 bg-teal-50 text-teal-700 text-[10px] font-black rounded-xl uppercase">Satuan: Orang</div>
                     </div>
                     
@@ -253,7 +253,6 @@
     <script>
         const SHEET_ID = '1YadaWbe7VSBohTrWfovStF52_WXzUFRfK7WfdxNkIXk';
         const SHEET_NAME = 'Rekap Absensi';
-        const SPREADSHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}`;
         const MONTHS_LIST = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
         let allData = [];
@@ -469,21 +468,60 @@
             `).join('');
         }
 
+        // Fungsi Helper untuk Gradasi Warna Berdasarkan Performa
+        function getPerformanceColor(count, totalPegawai) {
+            if (count === null || count === undefined) return { bg: 'bg-gray-50', text: 'text-gray-400', label: 'text-gray-400' };
+            
+            const ratio = count / (totalPegawai || 1);
+            
+            if (count === 0) return { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'text-emerald-500' };
+            if (ratio <= 0.1) return { bg: 'bg-teal-50', text: 'text-teal-700', label: 'text-teal-600' };
+            if (ratio <= 0.25) return { bg: 'bg-amber-50', text: 'text-amber-700', label: 'text-amber-600' };
+            return { bg: 'bg-rose-50', text: 'text-rose-700', label: 'text-rose-600' };
+        }
+
         function renderChart() {
             const ctx = document.getElementById('monthly-trend-chart');
             const legendContainer = document.getElementById('chart-legend-values');
             if (chartInstance) chartInstance.destroy();
-            const year = document.getElementById('year-selector').value;
-            const personnelCounts = MONTHS_LIST.map(m => {
-                const monthData = allData.filter(d => d.tahun == year && d.bulan == m);
-                return monthData.filter(d => getTLValue(d) > 0).length;
+            
+            const selectedYear = document.getElementById('year-selector').value;
+            const now = new Date();
+            const curYear = now.getFullYear();
+            const curMonthIdx = now.getMonth();
+            const totalPegawai = filteredData.length || 20;
+
+            const personnelCounts = MONTHS_LIST.map((m, i) => {
+                const monthData = allData.filter(d => d.tahun == selectedYear && d.bulan == m);
+                const count = monthData.filter(d => getTLValue(d) > 0).length;
+                
+                let isNoData = false;
+                if (parseInt(selectedYear) > curYear) {
+                    isNoData = true;
+                } else if (parseInt(selectedYear) == curYear && i > curMonthIdx) {
+                    isNoData = true;
+                } else if (monthData.length === 0) {
+                    isNoData = true;
+                }
+
+                return { count, isNoData };
             });
 
             legendContainer.innerHTML = MONTHS_LIST.map((m, i) => {
-                const isFuture = year == new Date().getFullYear() && i > new Date().getMonth();
-                return `<div class="flex flex-col items-center justify-center py-3 px-2 bg-gray-50 rounded-2xl ${isFuture ? 'opacity-20' : ''}">
-                        <span class="text-[9px] font-black text-gray-400 mb-1">${m.substring(0,3).toUpperCase()}</span>
-                        <span class="text-sm font-black text-teal-800">${personnelCounts[i]}</span>
+                const data = personnelCounts[i];
+                
+                if (data.isNoData) {
+                    return `<div class="flex flex-col items-center justify-center py-3 px-2 rounded-2xl transition-colors bg-gray-50/50 opacity-40">
+                            <span class="text-[9px] font-black mb-1 text-gray-400">${m.substring(0,3).toUpperCase()}</span>
+                            <span class="text-sm font-black text-gray-300">-</span>
+                        </div>`;
+                }
+
+                const colors = getPerformanceColor(data.count, totalPegawai);
+                
+                return `<div class="flex flex-col items-center justify-center py-3 px-2 rounded-2xl transition-all duration-500 border border-white shadow-sm ${colors.bg}">
+                        <span class="text-[9px] font-black mb-1 ${colors.label}">${m.substring(0,3).toUpperCase()}</span>
+                        <span class="text-sm font-black ${colors.text}">${data.count}</span>
                     </div>`;
             }).join('');
 
@@ -498,7 +536,7 @@
                     labels: MONTHS_LIST.map(m => m.substring(0, 3).toUpperCase()),
                     datasets: [{ 
                         label: 'Pegawai Terlambat',
-                        data: personnelCounts, 
+                        data: personnelCounts.map(p => p.isNoData ? null : p.count), 
                         borderColor: '#0d9488', 
                         backgroundColor: gradient,
                         borderWidth: 4, 
@@ -507,15 +545,32 @@
                         pointRadius: 6,
                         pointBackgroundColor: '#fff',
                         pointBorderColor: '#0d9488',
-                        pointBorderWidth: 3
+                        pointBorderWidth: 3,
+                        spanGaps: false
                     }]
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + " Pegawai Terlambat";
+                                }
+                            }
+                        }
+                    },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' } },
-                        x: { grid: { display: false } }
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: 'rgba(0,0,0,0.03)' }, 
+                            ticks: { stepSize: 1, color: '#94a3b8' } 
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', font: { weight: 'bold', size: 10 } }
+                        }
                     }
                 }
             });
@@ -523,7 +578,7 @@
 
         function toggleAdminAction() {
             if (isAdmin) {
-                window.open(SPREADSHEET_URL, '_blank');
+                window.open(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`, '_blank');
             } else {
                 showLoginModal();
             }
@@ -556,7 +611,7 @@
                 loginBtn.textContent = "Update Data";
                 loginBtn.classList.remove('from-blue-600', 'to-indigo-700');
                 loginBtn.classList.add('from-emerald-600', 'to-teal-700');
-                window.open(SPREADSHEET_URL, '_blank');
+                window.open(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`, '_blank');
                 hideLoginModal();
             } else {
                 errorBox.classList.remove('hidden');
