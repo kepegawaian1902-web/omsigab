@@ -155,6 +155,7 @@
                     <div class="flex items-center justify-between mb-8">
                         <div class="flex flex-col">
                             <h3 class="font-black text-gray-800 uppercase text-xs tracking-[0.2em]">Tren Pegawai Terlambat (Bulanan)</h3>
+                            <span id="chart-year-label" class="text-[10px] font-bold text-teal-600 uppercase tracking-widest mt-1">Tahun Terpilih</span>
                         </div>
                         <div class="px-4 py-2 bg-teal-50 text-teal-700 text-[10px] font-black rounded-xl uppercase">Satuan: Orang</div>
                     </div>
@@ -483,26 +484,35 @@
         function renderChart() {
             const ctx = document.getElementById('monthly-trend-chart');
             const legendContainer = document.getElementById('chart-legend-values');
+            const yearLabel = document.getElementById('chart-year-label');
+            
             if (chartInstance) chartInstance.destroy();
             
             const selectedYear = document.getElementById('year-selector').value;
+            yearLabel.textContent = `Tahun Tren: ${selectedYear}`;
+            
             const now = new Date();
             const curYear = now.getFullYear();
             const curMonthIdx = now.getMonth();
-            const totalPegawai = filteredData.length || 20;
+            
+            // Mencari jumlah pegawai di tahun terpilih untuk rasio performa
+            const totalPegawaiInYear = [...new Set(allData.filter(d => d.tahun == selectedYear).map(d => d.nama))].length || 20;
 
             const personnelCounts = MONTHS_LIST.map((m, i) => {
                 const monthData = allData.filter(d => d.tahun == selectedYear && d.bulan == m);
-                const count = monthData.filter(d => getTLValue(d) > 0).length;
                 
                 let isNoData = false;
-                if (parseInt(selectedYear) > curYear) {
-                    isNoData = true;
-                } else if (parseInt(selectedYear) == curYear && i > curMonthIdx) {
-                    isNoData = true;
-                } else if (monthData.length === 0) {
+                // Aturan "No Data" hanya jika data memang benar-benar kosong di Google Sheets
+                if (monthData.length === 0) {
                     isNoData = true;
                 }
+
+                // Hitung jumlah pegawai yang terlambat (TL)
+                const count = monthData.filter(d => {
+                    let tl_f = 0;
+                    if (Number(d.tl1) > 0) tl_f++; if (Number(d.tl2) > 0) tl_f++; if (Number(d.tl3) > 0) tl_f++; if (Number(d.tl4) > 0) tl_f++;
+                    return tl_f > 0;
+                }).length;
 
                 return { count, isNoData };
             });
@@ -517,7 +527,7 @@
                         </div>`;
                 }
 
-                const colors = getPerformanceColor(data.count, totalPegawai);
+                const colors = getPerformanceColor(data.count, totalPegawaiInYear);
                 
                 return `<div class="flex flex-col items-center justify-center py-3 px-2 rounded-2xl transition-all duration-500 border border-white shadow-sm ${colors.bg}">
                         <span class="text-[9px] font-black mb-1 ${colors.label}">${m.substring(0,3).toUpperCase()}</span>
@@ -525,7 +535,8 @@
                     </div>`;
             }).join('');
 
-            const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            const chartCtx = ctx.getContext('2d');
+            const gradient = chartCtx.createLinearGradient(0, 0, 0, 400);
             gradient.addColorStop(0, 'rgba(13, 148, 136, 0.4)');
             gradient.addColorStop(0.5, 'rgba(13, 148, 136, 0.1)');
             gradient.addColorStop(1, 'rgba(13, 148, 136, 0)');
@@ -546,7 +557,7 @@
                         pointBackgroundColor: '#fff',
                         pointBorderColor: '#0d9488',
                         pointBorderWidth: 3,
-                        spanGaps: false
+                        spanGaps: true
                     }]
                 },
                 options: { 
@@ -565,7 +576,11 @@
                         y: { 
                             beginAtZero: true, 
                             grid: { color: 'rgba(0,0,0,0.03)' }, 
-                            ticks: { stepSize: 1, color: '#94a3b8' } 
+                            ticks: { 
+                                stepSize: 1, 
+                                color: '#94a3b8',
+                                callback: function(value) { if (value % 1 === 0) return value; }
+                            } 
                         },
                         x: { 
                             grid: { display: false },
