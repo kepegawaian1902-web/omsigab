@@ -350,6 +350,16 @@
 
         function getKJKValue(obj) { return Number(obj.kekurangan_jam_kerja_kjk) || Number(obj.kjk) || Number(obj.kekurangan_jam_kerja) || 0; }
         
+        // Helper untuk menghitung frekuensi TL (Penjumlahan TL1-TL4)
+        function getTLFrequency(d) {
+            return (Number(d.tl1) || 0) + (Number(d.tl2) || 0) + (Number(d.tl3) || 0) + (Number(d.tl4) || 0);
+        }
+
+        // Helper untuk menghitung frekuensi PSW (Penjumlahan PSW1-PSW4)
+        function getPSWFrequency(d) {
+            return (Number(d.psw1) || 0) + (Number(d.psw2) || 0) + (Number(d.psw3) || 0) + (Number(d.psw4) || 0);
+        }
+
         function formatMinutesToHours(totalMinutes) {
             if (isNaN(totalMinutes) || totalMinutes === 0) return "0j 0m";
             const h = Math.floor(totalMinutes / 60);
@@ -379,27 +389,26 @@
                     const curr = map.get(d.nama);
                     curr.hadir += (Number(d.hari_hadir) || 0);
                     curr.tl += (Number(d.kjk_ht) || 0);
-                    curr.psw += (Number(d.kjk_pc) || 0);
+                    curr.psw += (Number(d.kjk_pc) || 0); // Menit KJK PC (PSW)
                     curr.kjk += getKJKValue(d);
-                    if (Number(d.tl1) > 0) curr.tl_freq++; if (Number(d.tl2) > 0) curr.tl_freq++; if (Number(d.tl3) > 0) curr.tl_freq++; if (Number(d.tl4) > 0) curr.tl_freq++;
-                    if (Number(d.psw1) > 0) curr.psw_freq++; if (Number(d.psw2) > 0) curr.psw_freq++; if (Number(d.psw3) > 0) curr.psw_freq++; if (Number(d.psw4) > 0) curr.psw_freq++;
+                    
+                    // Akumulasi frekuensi
+                    curr.tl_freq += getTLFrequency(d);
+                    curr.psw_freq += getPSWFrequency(d);
                     curr.apel_freq += (Number(d.keterlambatan_apel_pagi) || 0);
                 });
                 filteredData = Array.from(map.values());
             } else {
                 filteredData = allData.filter(d => d.tahun == year && d.bulan == month).map(d => {
-                    let tl_f = 0, psw_f = 0;
-                    if (Number(d.tl1) > 0) tl_f++; if (Number(d.tl2) > 0) tl_f++; if (Number(d.tl3) > 0) tl_f++; if (Number(d.tl4) > 0) tl_f++;
-                    if (Number(d.psw1) > 0) psw_f++; if (Number(d.psw2) > 0) psw_f++; if (Number(d.psw3) > 0) psw_f++; if (Number(d.psw4) > 0) psw_f++;
                     return { 
                         nama: d.nama, 
                         hadir: d.hari_hadir || 0, 
                         kjk: getKJKValue(d), 
-                        tl_freq: tl_f, 
-                        psw_freq: psw_f, 
+                        tl_freq: getTLFrequency(d), 
+                        psw_freq: getPSWFrequency(d), 
                         apel_freq: Number(d.keterlambatan_apel_pagi) || 0,
                         tl: Number(d.kjk_ht) || 0,
-                        psw: Number(d.kjk_pc) || 0
+                        psw: Number(d.kjk_pc) || 0 // Nilai menit dari KJK PC (PSW)
                     };
                 });
             }
@@ -512,7 +521,7 @@
 
             const personnelCounts = MONTHS_LIST.map((m, i) => {
                 const monthData = allData.filter(d => d.tahun == selectedYear && d.bulan == m);
-                const count = monthData.filter(d => (Number(d.kjk_ht) || 0) > 0).length;
+                const count = monthData.filter(d => getTLFrequency(d) > 0).length;
                 let isNoData = (parseInt(selectedYear) > curYear) || (parseInt(selectedYear) == curYear && i > curMonthIdx) || (monthData.length === 0);
                 return { count, isNoData };
             });
