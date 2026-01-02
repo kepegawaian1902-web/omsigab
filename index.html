@@ -78,6 +78,20 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        .equal-height-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 2.5rem;
+        }
+        
+        .kjk-list-item {
+            padding: 0.85rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .kjk-list-item:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
@@ -142,34 +156,32 @@
                 <div id="metrics-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-6"></div>
                 <div id="incident-container" class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-10"></div>
                 
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
+                <div class="equal-height-grid flex flex-col lg:grid">
                     <!-- Top 10 KJK -->
-                    <div class="lg:col-span-5 bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 flex flex-col">
-                        <div class="flex flex-col mb-8">
-                            <h3 class="font-black text-gray-800 uppercase text-xs tracking-[0.2em] text-red-600 flex items-center mb-1">
-                                <span class="w-3 h-3 bg-red-600 rounded-full mr-3 animate-ping"></span>
+                    <div class="lg:col-span-5 bg-white p-10 rounded-[2.5rem] shadow-xl border border-gray-100 flex flex-col">
+                        <div class="flex flex-col mb-6">
+                            <h3 class="font-black text-gray-800 uppercase text-xs tracking-[0.2em] text-red-600 flex items-center mb-2">
+                                <span class="w-3 h-3 bg-red-600 rounded-full mr-3 animate-pulse"></span>
                                 Top 10 Kekurangan Jam Kerja
                             </h3>
-                            <span id="kjk-recap-title" class="text-[9px] font-bold text-gray-400 uppercase tracking-wider ml-6">Akumulasi s/d Bulan Terpilih</span>
+                            <span id="kjk-recap-title" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-6">Akumulasi s/d Bulan Terpilih</span>
                         </div>
-                        <div class="overflow-hidden flex-grow">
-                            <table class="w-full text-sm border-separate border-spacing-y-2">
-                                <tbody id="kjk-recap-body"></tbody>
-                            </table>
+                        <div class="flex-grow flex flex-col justify-between" id="kjk-recap-list">
+                            <!-- Content via JS -->
                         </div>
                     </div>
 
-                    <!-- Grafik Tren -->
+                    <!-- Grafik Tren & KJK Tahunan -->
                     <div class="lg:col-span-7 flex flex-col gap-10">
                         <!-- Chart Bulanan -->
-                        <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 flex flex-col flex-1">
+                        <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 flex flex-col flex-grow">
                             <div class="flex items-center justify-between mb-8">
                                 <div class="flex flex-col">
                                     <h3 class="font-black text-gray-800 uppercase text-xs tracking-[0.2em]">Tren Pegawai Terlambat (Bulanan)</h3>
                                 </div>
                                 <div class="px-4 py-2 bg-teal-50 text-teal-700 text-[10px] font-black rounded-xl uppercase">Satuan: Orang</div>
                             </div>
-                            <div class="relative flex-grow min-h-[300px]">
+                            <div class="relative flex-grow min-h-[350px]">
                                 <canvas id="monthly-trend-chart"></canvas>
                             </div>
                             <div class="border-t border-gray-100 pt-6 mt-6">
@@ -177,7 +189,7 @@
                             </div>
                         </div>
 
-                        <!-- Chart Tahunan KJK (Dinamis & Simetris) -->
+                        <!-- Chart Tahunan KJK -->
                         <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 flex flex-col">
                             <div class="flex items-center justify-between mb-8">
                                 <div class="flex flex-col">
@@ -185,17 +197,11 @@
                                 </div>
                                 <div class="px-4 py-2 bg-indigo-50 text-indigo-700 text-[10px] font-black rounded-xl uppercase">Satuan: Jam</div>
                             </div>
-                            
                             <div class="w-full flex flex-col items-center">
-                                <!-- Area Grafik Dinamis -->
-                                <div class="relative w-full max-w-[500px] h-[220px]">
+                                <div class="relative w-full max-w-[500px] h-[180px]">
                                     <canvas id="yearly-kjk-chart"></canvas>
                                 </div>
-                                
-                                <!-- Legend Grid Otomatis -->
-                                <div id="yearly-kjk-stats" class="grid grid-flow-col auto-cols-fr w-full max-w-[500px] mt-4 gap-4">
-                                    <!-- Rendered by JS secara dinamis -->
-                                </div>
+                                <div id="yearly-kjk-stats" class="grid grid-flow-col auto-cols-fr w-full max-w-[500px] mt-4 gap-4"></div>
                             </div>
                         </div>
                     </div>
@@ -238,7 +244,7 @@
         <div class="w-full h-4 bg-gradient-to-r from-teal-800 via-teal-700 to-emerald-600"></div>
     </footer>
 
-    <!-- MODAL DETAIL PEGAWAI -->
+    <!-- MODALS -->
     <div id="detail-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-lg z-50 flex items-center justify-center hidden p-6">
         <div class="bg-white w-full max-w-3xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-white/20">
             <div class="p-8 md:p-10 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 flex-shrink-0">
@@ -264,7 +270,6 @@
         </div>
     </div>
 
-    <!-- MODAL LOGIN ADMIN -->
     <div id="login-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center hidden p-4">
         <div class="bg-white p-10 rounded-[2.5rem] max-w-md w-full shadow-2xl border border-gray-100">
             <div class="text-center mb-8">
@@ -276,22 +281,19 @@
                 <h3 class="text-2xl font-black text-gray-800">Login Administrator</h3>
                 <p class="text-sm text-gray-500">Masukkan kredensial untuk akses data</p>
             </div>
-            
             <form id="login-form" onsubmit="event.preventDefault(); handleLogin();" class="space-y-4">
                 <div>
                     <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Username</label>
-                    <input type="text" id="login-username" class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-4 text-base font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" placeholder="Masukkan username">
+                    <input type="text" id="login-username" class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-4 text-base font-bold outline-none transition-all" placeholder="Username">
                 </div>
                 <div>
                     <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Password</label>
-                    <input type="password" id="login-password" class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-4 text-base font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" placeholder="••••••••">
+                    <input type="password" id="login-password" class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-4 text-base font-bold outline-none transition-all" placeholder="••••••••">
                 </div>
-                <div id="login-error" class="hidden bg-red-50 text-red-600 text-xs font-bold p-4 rounded-xl text-center">
-                    Username atau password salah!
-                </div>
+                <div id="login-error" class="hidden bg-red-50 text-red-600 text-xs font-bold p-4 rounded-xl text-center">Salah!</div>
                 <div class="flex gap-4 pt-4">
-                    <button type="button" onclick="hideLoginModal()" class="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 transition-all">Batal</button>
-                    <button type="submit" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all">Masuk</button>
+                    <button type="button" onclick="hideLoginModal()" class="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold">Batal</button>
+                    <button type="submit" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-bold">Masuk</button>
                 </div>
             </form>
         </div>
@@ -333,53 +335,29 @@
         }
 
         function initSelectors() {
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonthName = MONTHS_LIST[now.getMonth()];
-
             const years = [...new Set(allData.map(d => d.tahun))].filter(y => y).sort().reverse();
             const yearSelect = document.getElementById('year-selector');
             yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
-            
-            if (years.includes(currentYear)) {
-                yearSelect.value = currentYear;
-            } else {
-                yearSelect.value = years[0];
-            }
-
-            updateMonths(currentMonthName);
-            
+            yearSelect.value = years[0];
+            updateMonths();
             yearSelect.onchange = () => updateMonths();
             document.getElementById('month-selector').onchange = render;
         }
 
-        function updateMonths(preferredMonth = null) {
+        function updateMonths() {
             const selectedYear = document.getElementById('year-selector').value;
-            const monthsInYear = [...new Set(allData.filter(d => d.tahun == selectedYear).map(d => d.bulan))].filter(m => m);
+            const monthsInSheet = [...new Set(allData.filter(d => d.tahun == selectedYear).map(d => d.bulan))].filter(m => m);
             const monthSelect = document.getElementById('month-selector');
-            const sortedMonths = monthsInYear.sort((a, b) => MONTHS_LIST.indexOf(a) - MONTHS_LIST.indexOf(b));
-            
+            const sortedMonths = monthsInSheet.sort((a, b) => MONTHS_LIST.indexOf(a) - MONTHS_LIST.indexOf(b));
             monthSelect.innerHTML = sortedMonths.map(m => `<option value="${m}">${m.toUpperCase()}</option>`).join('') + 
                                    `<option value="ALL">REKAP TAHUNAN</option>`;
-            
-            if (preferredMonth && sortedMonths.includes(preferredMonth)) {
-                monthSelect.value = preferredMonth;
-            } else if (sortedMonths.length > 0) {
-                monthSelect.value = sortedMonths[sortedMonths.length - 1];
-            }
-
+            if (sortedMonths.length > 0) monthSelect.value = sortedMonths[sortedMonths.length - 1];
             render();
         }
 
         function getKJKValue(obj) { return Number(obj.kekurangan_jam_kerja_kjk) || Number(obj.kjk) || Number(obj.kekurangan_jam_kerja) || 0; }
-        
-        function getTLFrequency(d) {
-            return (Number(d.tl1) || 0) + (Number(d.tl2) || 0) + (Number(d.tl3) || 0) + (Number(d.tl4) || 0);
-        }
-
-        function getPSWFrequency(d) {
-            return (Number(d.psw1) || 0) + (Number(d.psw2) || 0) + (Number(d.psw3) || 0) + (Number(d.psw4) || 0);
-        }
+        function getTLFrequency(d) { return (Number(d.tl1) || 0) + (Number(d.tl2) || 0) + (Number(d.tl3) || 0) + (Number(d.tl4) || 0); }
+        function getPSWFrequency(d) { return (Number(d.psw1) || 0) + (Number(d.psw2) || 0) + (Number(d.psw3) || 0) + (Number(d.psw4) || 0); }
 
         function formatMinutesToHours(totalMinutes) {
             if (isNaN(totalMinutes) || totalMinutes === 0) return "0j 0m";
@@ -391,10 +369,8 @@
         function render() {
             const year = document.getElementById('year-selector').value;
             const month = document.getElementById('month-selector').value;
-            
             const selectedMonthIndex = month === "ALL" ? 11 : MONTHS_LIST.indexOf(month);
             const relevantMonths = MONTHS_LIST.slice(0, selectedMonthIndex + 1);
-            
             const accMap = new Map();
             allData.filter(d => d.tahun == year && relevantMonths.includes(d.bulan)).forEach(d => {
                 if (!accMap.has(d.nama)) accMap.set(d.nama, { nama: d.nama, kjk: 0 });
@@ -402,7 +378,6 @@
                 curr.kjk += getKJKValue(d);
             });
             accumulatedData = Array.from(accMap.values());
-
             if (month === "ALL") {
                 const map = new Map();
                 allData.filter(d => d.tahun == year).forEach(d => {
@@ -420,14 +395,10 @@
             } else {
                 filteredData = allData.filter(d => d.tahun == year && d.bulan == month).map(d => {
                     return { 
-                        nama: d.nama, 
-                        hadir: d.hari_hadir || 0, 
-                        kjk: getKJKValue(d), 
-                        tl_freq: getTLFrequency(d), 
-                        psw_freq: getPSWFrequency(d), 
+                        nama: d.nama, hadir: d.hari_hadir || 0, kjk: getKJKValue(d), 
+                        tl_freq: getTLFrequency(d), psw_freq: getPSWFrequency(d), 
                         apel_freq: Number(d.keterlambatan_apel_pagi) || 0,
-                        tl: Number(d.kjk_ht) || 0,
-                        psw: Number(d.kjk_pc) || 0 
+                        tl: Number(d.kjk_ht) || 0, psw: Number(d.kjk_pc) || 0 
                     };
                 });
             }
@@ -439,14 +410,12 @@
             const totalAccKJK = accumulatedData.reduce((a, b) => a + b.kjk, 0);
             const countTL = filteredData.filter(d => d.tl_freq > 0).length;
             const countPSW = filteredData.filter(d => d.psw_freq > 0).length;
-
             const metrics = [
                 { label: 'Total Pegawai', val: filteredData.length, sub: 'Pegawai Aktif', gradient: 'from-blue-800 to-indigo-950' },
                 { label: '% Pegawai Terlambat', val: ((countTL / (filteredData.length || 1)) * 100).toFixed(1) + "%", sub: countTL + ' Orang', gradient: 'from-orange-600 to-red-800' },
                 { label: '% Pegawai PSW', val: ((countPSW / (filteredData.length || 1)) * 100).toFixed(1) + "%", sub: countPSW + ' Orang', gradient: 'from-amber-500 to-orange-700' },
                 { label: 'Total Akumulasi KJK', val: formatMinutesToHours(totalAccKJK), sub: 'Januari s/d ' + (document.getElementById('month-selector').value === "ALL" ? "Desember" : document.getElementById('month-selector').value), gradient: 'from-rose-700 to-purple-900' }
             ];
-
             document.getElementById('metrics-container').innerHTML = metrics.map(m => `
                 <div class="bg-gradient-to-br ${m.gradient} p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden card-gloss">
                     <div class="relative z-10">
@@ -458,7 +427,6 @@
                     </div>
                 </div>
             `).join('');
-
             renderIncidents();
             renderTopKJK();
             renderTable();
@@ -486,14 +454,17 @@
             const month = document.getElementById('month-selector').value;
             const top = accumulatedData.sort((a, b) => b.kjk - a.kjk).slice(0, 10);
             document.getElementById('kjk-recap-title').textContent = `Akumulasi Jan s/d ${month === "ALL" ? "Desember" : month}`;
-            document.getElementById('kjk-recap-body').innerHTML = top.map((d, i) => `
-                <tr class="group hover:bg-gray-50 transition-all">
-                    <td class="py-3 text-gray-300 font-black w-10 text-xs">${i+1}</td>
-                    <td class="py-3 text-gray-700 font-medium text-sm truncate max-w-[180px]">${d.nama}</td>
-                    <td class="py-3 text-right">
-                        <span class="bg-red-50 text-red-600 font-black text-[10px] px-3 py-1.5 rounded-lg border border-red-100">${formatMinutesToHours(d.kjk)}</span>
-                    </td>
-                </tr>
+            
+            document.getElementById('kjk-recap-list').innerHTML = top.map((d, i) => `
+                <div class="kjk-list-item group flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <span class="text-gray-300 font-black text-base w-5">${i+1}</span>
+                        <span class="text-gray-800 font-bold text-sm md:text-sm group-hover:translate-x-1 transition-transform">${d.nama}</span>
+                    </div>
+                    <div class="bg-red-50 text-red-600 font-black text-[12px] md:text-[13px] px-4 py-1.5 rounded-xl border border-red-100 shadow-sm">
+                        ${formatMinutesToHours(d.kjk)}
+                    </div>
+                </div>
             `).join('');
         }
 
@@ -519,41 +490,32 @@
             `).join('');
         }
 
-        function renderCharts() {
-            renderMonthlyChart();
-            renderYearlyChart();
-        }
-
-        function getPerformanceColor(count, totalPegawai) {
-            if (count === null || count === undefined) return { bg: 'bg-gray-50', text: 'text-gray-400', label: 'text-gray-400' };
-            const ratio = count / (totalPegawai || 1);
-            if (count === 0) return { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'text-emerald-500' };
-            if (ratio <= 0.1) return { bg: 'bg-teal-50', text: 'text-teal-700', label: 'text-teal-600' };
-            if (ratio <= 0.25) return { bg: 'bg-amber-50', text: 'text-amber-700', label: 'text-amber-600' };
-            return { bg: 'bg-rose-50', text: 'text-rose-700', label: 'text-rose-600' };
-        }
+        function renderCharts() { renderMonthlyChart(); renderYearlyChart(); }
 
         function renderMonthlyChart() {
             const ctx = document.getElementById('monthly-trend-chart');
             const legendContainer = document.getElementById('chart-legend-values');
             if (chartInstance) chartInstance.destroy();
             const selectedYear = document.getElementById('year-selector').value;
-            const now = new Date();
-            const curYear = now.getFullYear();
-            const curMonthIdx = now.getMonth();
             const totalPegawai = filteredData.length || 20;
+            const availableMonths = [...new Set(allData.filter(d => d.tahun == selectedYear).map(d => d.bulan))];
+            const lastAvailableMonthIdx = availableMonths.length > 0 ? Math.max(...availableMonths.map(m => MONTHS_LIST.indexOf(m))) : -1;
 
             const personnelCounts = MONTHS_LIST.map((m, i) => {
                 const monthData = allData.filter(d => d.tahun == selectedYear && d.bulan == m);
                 const count = monthData.filter(d => getTLFrequency(d) > 0).length;
-                let isNoData = (parseInt(selectedYear) > curYear) || (parseInt(selectedYear) == curYear && i > curMonthIdx) || (monthData.length === 0);
+                let isNoData = i > lastAvailableMonthIdx || monthData.length === 0;
                 return { count, isNoData };
             });
 
             legendContainer.innerHTML = MONTHS_LIST.map((m, i) => {
                 const data = personnelCounts[i];
                 if (data.isNoData) return `<div class="flex flex-col items-center justify-center py-3 px-2 rounded-2xl bg-gray-50/50 opacity-40"><span class="text-[9px] font-black mb-1 text-gray-400">${m.substring(0,3).toUpperCase()}</span><span class="text-sm font-black text-gray-300">-</span></div>`;
-                const colors = getPerformanceColor(data.count, totalPegawai);
+                const ratio = data.count / (totalPegawai || 1);
+                let colors = { bg: 'bg-rose-50', text: 'text-rose-700', label: 'text-rose-600' };
+                if (data.count === 0) colors = { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'text-emerald-500' };
+                else if (ratio <= 0.1) colors = { bg: 'bg-teal-50', text: 'text-teal-700', label: 'text-teal-600' };
+                else if (ratio <= 0.25) colors = { bg: 'bg-amber-50', text: 'text-amber-700', label: 'text-amber-600' };
                 return `<div class="flex flex-col items-center justify-center py-3 px-2 rounded-2xl border border-white shadow-sm ${colors.bg}"><span class="text-[9px] font-black mb-1 ${colors.label}">${m.substring(0,3).toUpperCase()}</span><span class="text-sm font-black ${colors.text}">${data.count}</span></div>`;
             }).join('');
 
@@ -590,45 +552,38 @@
             const statsContainer = document.getElementById('yearly-kjk-stats');
             if (yearlyChartInstance) yearlyChartInstance.destroy();
 
-            // Mendapatkan semua tahun unik dari data secara dinamis
-            const yearsInSheet = [...new Set(allData.map(d => parseInt(d.tahun)))].filter(y => !isNaN(y)).sort((a,b) => a-b);
+            // Mendapatkan daftar tahun dari spreadsheet
+            const yearsInSheet = [...new Set(allData.map(d => parseInt(d.tahun)))].filter(y => !isNaN(y));
             
-            // Mengatur data statis untuk tahun-tahun lama (sebagai baseline jika data tidak lengkap di sheet)
-            // Namun idealnya semua data ada di sheet agar fully dynamic.
-            const dynamicYearData = yearsInSheet.map(year => {
+            // Menggabungkan tahun dasar (2023, 2024) dengan tahun yang ada di sheet
+            const allYears = [...new Set([2023, 2024, ...yearsInSheet])].sort((a,b) => a-b);
+            
+            const dynamicYearData = allYears.map(year => {
                 let totalMenit = 0;
-                // Khusus 2023 & 2024 jika tidak ada di sheet, kita gunakan nilai fallback yang Anda miliki
-                if (year === 2023 && allData.filter(d => d.tahun == 2023).length === 0) totalMenit = 7930;
-                else if (year === 2024 && allData.filter(d => d.tahun == 2024).length === 0) totalMenit = 5360;
-                else {
-                    totalMenit = allData.filter(d => d.tahun == year).reduce((sum, d) => sum + getKJKValue(d), 0);
+                // Cek apakah data tahun ini ada di sheet
+                const sheetDataForYear = allData.filter(d => d.tahun == year);
+                
+                if (sheetDataForYear.length > 0) {
+                    totalMenit = sheetDataForYear.reduce((sum, d) => sum + getKJKValue(d), 0);
+                } else {
+                    // Jika tidak ada di sheet, gunakan data historis statis
+                    if (year === 2023) totalMenit = 7930;
+                    else if (year === 2024) totalMenit = 5360;
                 }
+                
                 return { year: year, jam: (totalMenit / 60).toFixed(1) };
             });
 
-            // Jika sheet kosong/baru, pastikan minimal ada tahun 2023/2024 sebagai history
-            if (!yearsInSheet.includes(2023)) dynamicYearData.unshift({ year: 2023, jam: (7930/60).toFixed(1) });
-            if (!yearsInSheet.includes(2024)) {
-                 // Cari posisi insert yang tepat
-                 const idx = dynamicYearData.findIndex(d => d.year > 2024);
-                 if (idx === -1) dynamicYearData.push({ year: 2024, jam: (5360/60).toFixed(1) });
-                 else dynamicYearData.splice(idx, 0, { year: 2024, jam: (5360/60).toFixed(1) });
-            }
-
             const latestYear = Math.max(...dynamicYearData.map(d => d.year));
-
             const labels = dynamicYearData.map(d => d.year === latestYear ? `${d.year}*` : `${d.year}`);
             const values = dynamicYearData.map(d => parseFloat(d.jam));
 
             statsContainer.innerHTML = dynamicYearData.map(d => {
                 const isLatest = d.year === latestYear;
-                const color = isLatest ? 'text-teal-700' : 'text-indigo-700';
-                const bg = isLatest ? 'bg-teal-50' : 'bg-indigo-50/50';
-                const border = isLatest ? 'border-teal-100' : 'border-indigo-100';
                 return `
-                    <div class="flex flex-col items-center justify-center py-4 rounded-3xl border ${border} ${bg} transition-all">
+                    <div class="flex flex-col items-center justify-center py-4 rounded-3xl border ${isLatest ? 'border-teal-100 bg-teal-50' : 'border-indigo-100 bg-indigo-50/50'}">
                         <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">${isLatest ? d.year + '*' : d.year}</span>
-                        <span class="text-xl font-black ${color}">${d.jam}</span>
+                        <span class="text-xl font-black ${isLatest ? 'text-teal-700' : 'text-indigo-700'}">${d.jam}</span>
                         <span class="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Jam</span>
                     </div>
                 `;
@@ -639,82 +594,53 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'KJK (Jam)',
                         data: values,
-                        backgroundColor: (context) => {
-                            const label = context.chart.data.labels[context.dataIndex];
-                            return label.includes('*') ? '#0d9488' : '#e0e7ff';
-                        },
-                        hoverBackgroundColor: (context) => {
-                            const label = context.chart.data.labels[context.dataIndex];
-                            return label.includes('*') ? '#0f766e' : '#c7d2fe';
-                        },
-                        borderRadius: 12,
+                        backgroundColor: (c) => c.chart.data.labels[c.dataIndex].includes('*') ? '#0d9488' : '#e0e7ff',
+                        borderRadius: 12, 
                         barThickness: dynamicYearData.length > 4 ? 30 : 45,
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: { 
-                            callbacks: {
-                                label: (item) => `${item.raw} Jam`
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { display: false, beginAtZero: true },
-                        x: { grid: { display: false }, ticks: { display: false } }
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { display: false }, 
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { display: false } 
+                        } 
                     }
                 }
             });
         }
 
         function toggleAdminAction() { if (isAdmin) window.open(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`, '_blank'); else showLoginModal(); }
-        function showLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); document.getElementById('login-error').classList.add('hidden'); }
+        function showLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); }
         function hideLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
-
         function handleLogin() {
-            const u = document.getElementById('login-username').value;
-            const p = document.getElementById('login-password').value;
-            if (u === "umum1902" && p === "rahasia1902") {
+            if (document.getElementById('login-username').value === "umum1902" && document.getElementById('login-password').value === "rahasia1902") {
                 isAdmin = true;
-                const authStatus = document.getElementById('auth-status');
-                authStatus.textContent = "Administrator";
-                authStatus.classList.add('bg-emerald-500/30', 'border-emerald-400');
+                document.getElementById('auth-status').textContent = "Administrator";
                 document.getElementById('logout-btn').classList.remove('hidden');
                 document.getElementById('login-nav-btn').textContent = "Update Data";
                 window.open(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`, '_blank');
                 hideLoginModal();
             } else { document.getElementById('login-error').classList.remove('hidden'); }
         }
-
-        function handleLogout() {
-            isAdmin = false;
-            document.getElementById('auth-status').textContent = "Mode Publik";
-            document.getElementById('logout-btn').classList.add('hidden');
-            document.getElementById('login-nav-btn').textContent = "Login Admin";
-        }
-
+        function handleLogout() { isAdmin = false; document.getElementById('auth-status').textContent = "Mode Publik"; document.getElementById('logout-btn').classList.add('hidden'); document.getElementById('login-nav-btn').textContent = "Login Admin"; }
         function openDetailModal(type) {
-            const modal = document.getElementById('detail-modal');
             const tbody = document.getElementById('detail-table-body');
             let data = filteredData.filter(d => d[type+'_freq'] > 0).sort((a,b) => b[type+'_freq'] - a[type+'_freq']);
             tbody.innerHTML = data.map((d, i) => `<tr class="hover:bg-gray-50"><td class="p-5 text-gray-400 font-bold">${i+1}</td><td class="p-5 font-bold text-gray-700">${d.nama}</td><td class="p-5 text-right font-black text-teal-600">${d[type+'_freq']} <small class="text-[10px] text-gray-400">KALI</small></td></tr>`).join('');
-            modal.classList.remove('hidden');
+            document.getElementById('detail-modal').classList.remove('hidden');
         }
-
         function closeDetailModal() { document.getElementById('detail-modal').classList.add('hidden'); }
-        
         function switchView(view) {
             document.getElementById('dashboard-view').classList.toggle('hidden', view !== 'dashboard');
             document.getElementById('rekap-view').classList.toggle('hidden', view !== 'rekap');
             document.getElementById('nav-dashboard').classList.toggle('active', view === 'dashboard');
             document.getElementById('nav-rekap').classList.toggle('active', view === 'rekap');
         }
-
         window.onload = loadData;
     </script>
 </body>
